@@ -47,5 +47,6 @@ view model =
   ul [ class "seats" ] (List.map seatItem model )
 
 
+seatItem : Seat -> Html
 seatItem seat =
   li [ class "seat available"] [ text (toString seat.seatNo) ]
