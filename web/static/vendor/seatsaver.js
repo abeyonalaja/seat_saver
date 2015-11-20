@@ -2938,6 +2938,11 @@ Elm.Html.Attributes.make = function (_elm) {
    $String = Elm.String.make(_elm),
    $VirtualDom = Elm.VirtualDom.make(_elm);
    var attribute = $VirtualDom.attribute;
+   var contextmenu = function (value) {
+      return A2(attribute,
+      "contextmenu",
+      value);
+   };
    var property = $VirtualDom.property;
    var stringProperty = F2(function (name,
    string) {
@@ -2962,13 +2967,8 @@ Elm.Html.Attributes.make = function (_elm) {
    };
    var accesskey = function ($char) {
       return A2(stringProperty,
-      "accesskey",
-      $String.fromList(_L.fromArray([$char])));
-   };
-   var contextmenu = function (value) {
-      return A2(stringProperty,
-      "contextmenu",
-      value);
+      "accessKey",
+      $String.fromChar($char));
    };
    var dir = function (value) {
       return A2(stringProperty,
@@ -3117,7 +3117,7 @@ Elm.Html.Attributes.make = function (_elm) {
    };
    var formaction = function (value) {
       return A2(stringProperty,
-      "formaction",
+      "formAction",
       value);
    };
    var list = function (value) {
@@ -12084,16 +12084,45 @@ Elm.SeatSaver.make = function (_elm) {
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
-   $Signal = Elm.Signal.make(_elm);
-   var seatItem = function (seat) {
+   $Signal = Elm.Signal.make(_elm),
+   $StartApp$Simple = Elm.StartApp.Simple.make(_elm);
+   var seatItem = F2(function (address,
+   seat) {
       return A2($Html.li,
       _L.fromArray([$Html$Attributes.$class("seat available")]),
       _L.fromArray([$Html.text($Basics.toString(seat.seatNo))]));
-   };
-   var view = function (model) {
+   });
+   var view = F2(function (address,
+   model) {
       return A2($Html.ul,
       _L.fromArray([$Html$Attributes.$class("seats")]),
-      A2($List.map,seatItem,model));
+      A2($List.map,
+      seatItem(address),
+      model));
+   });
+   var update = F2(function (action,
+   model) {
+      return function () {
+         switch (action.ctor)
+         {case "Toggle":
+            return function () {
+                 var updateSeat = function (seatFromModel) {
+                    return _U.eq(seatFromModel.seatNo,
+                    action._0.seatNo) ? _U.replace([["occupied"
+                                                    ,$Basics.not(seatFromModel.occupied)]],
+                    seatFromModel) : seatFromModel;
+                 };
+                 return A2($List.map,
+                 updateSeat,
+                 model);
+              }();}
+         _U.badCase($moduleName,
+         "between lines 58 and 67");
+      }();
+   });
+   var Toggle = function (a) {
+      return {ctor: "Toggle"
+             ,_0: a};
    };
    var init = _L.fromArray([{_: {}
                             ,occupied: false
@@ -12136,11 +12165,16 @@ Elm.SeatSaver.make = function (_elm) {
              ,occupied: b
              ,seatNo: a};
    });
-   var main = view(init);
+   var main = $StartApp$Simple.start({_: {}
+                                     ,model: init
+                                     ,update: update
+                                     ,view: view});
    _elm.SeatSaver.values = {_op: _op
                            ,main: main
                            ,Seat: Seat
                            ,init: init
+                           ,Toggle: Toggle
+                           ,update: update
                            ,view: view
                            ,seatItem: seatItem};
    return _elm.SeatSaver.values;
@@ -12288,6 +12322,68 @@ Elm.Signal.make = function (_elm) {
                         ,forwardTo: forwardTo
                         ,Mailbox: Mailbox};
    return _elm.Signal.values;
+};
+Elm.StartApp = Elm.StartApp || {};
+Elm.StartApp.Simple = Elm.StartApp.Simple || {};
+Elm.StartApp.Simple.make = function (_elm) {
+   "use strict";
+   _elm.StartApp = _elm.StartApp || {};
+   _elm.StartApp.Simple = _elm.StartApp.Simple || {};
+   if (_elm.StartApp.Simple.values)
+   return _elm.StartApp.Simple.values;
+   var _op = {},
+   _N = Elm.Native,
+   _U = _N.Utils.make(_elm),
+   _L = _N.List.make(_elm),
+   $moduleName = "StartApp.Simple",
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Html = Elm.Html.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var start = function (config) {
+      return function () {
+         var update = F2(function (maybeAction,
+         model) {
+            return function () {
+               switch (maybeAction.ctor)
+               {case "Just":
+                  return A2(config.update,
+                    maybeAction._0,
+                    model);
+                  case "Nothing":
+                  return $Debug.crash("This should never happen.");}
+               _U.badCase($moduleName,
+               "between lines 91 and 98");
+            }();
+         });
+         var actions = $Signal.mailbox($Maybe.Nothing);
+         var address = A2($Signal.forwardTo,
+         actions.address,
+         $Maybe.Just);
+         var model = A3($Signal.foldp,
+         update,
+         config.model,
+         actions.signal);
+         return A2($Signal.map,
+         config.view(address),
+         model);
+      }();
+   };
+   var Config = F3(function (a,
+   b,
+   c) {
+      return {_: {}
+             ,model: a
+             ,update: c
+             ,view: b};
+   });
+   _elm.StartApp.Simple.values = {_op: _op
+                                 ,Config: Config
+                                 ,start: start};
+   return _elm.StartApp.Simple.values;
 };
 Elm.String = Elm.String || {};
 Elm.String.make = function (_elm) {
